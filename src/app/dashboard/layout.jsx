@@ -12,16 +12,7 @@ export default async function DashboardLayout({ children }) {
     redirect('/login');
   }
 
-  const res = await fetch('http://192.168.10.76:8080/api/auth/check', {
-    method: 'GET',
-    credentials: 'include',
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-
-  if (!res.ok) {
-    redirect('/login');
-  }
+  
 
   return (
     <PlanillaSelectionProvider>
