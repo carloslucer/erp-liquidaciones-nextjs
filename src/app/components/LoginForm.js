@@ -61,13 +61,20 @@ export default function LoginForm() {
       });
 
       if (res.status === 401) {
-        // Only show wrong credentials, not session expired
-        setError('Datos de inicio de sesión incorrectos, verificar usuario y contraseña');
+        let errorMsg = 'Datos de inicio de sesión incorrectos';
+        try {
+          const data = await res.json();
+          errorMsg = data.message || errorMsg; // Intenta leer el JSON de Spring
+        } catch (e) {
+          // Si Spring no devolvió JSON, usa el mensaje por defecto
+        }
+        setError(errorMsg);
         return;
       }
 
+      // 2. Manejo de otros errores (500, 404, 403)
       if (!res.ok) {
-        let msg = 'Error al iniciar sesión';
+        let msg = 'Error inesperado en el servidor';
         try {
           const data = await res.json();
           msg = data?.message || msg;
@@ -77,12 +84,14 @@ export default function LoginForm() {
         return;
       }
 
+      // 3. Éxito
       toast.success('Bienvenido');
       router.push('/dashboard');
+
     } catch (err) {
-      console.error('Error de red:', err);
-      setError('Error de red al intentar iniciar sesión');
-      toast.error('Error de red al intentar iniciar sesión');
+      // Aquí solo entrará si el contenedor de Next no puede llegar al de Spring (Error 502/504 real)
+      console.error('Error físico de conexión:', err);
+      setError('Datos de inicio de sesión incorrectos');
     } finally {
       setIsLoading(false);
     }
