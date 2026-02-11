@@ -36,7 +36,7 @@ export default function Sidebar() {
         router.push('/login')
       }
     } catch (error) {
-      console.error('Error al cerrar sesión:', error)
+      // Opcionalmente, mostrar un toast de error al usuario
     }
   }
 

@@ -90,7 +90,6 @@ export default function LoginForm() {
 
     } catch (err) {
       // Aquí solo entrará si el contenedor de Next no puede llegar al de Spring (Error 502/504 real)
-      console.error('Error físico de conexión:', err);
       setError('Datos de inicio de sesión incorrectos');
     } finally {
       setIsLoading(false);

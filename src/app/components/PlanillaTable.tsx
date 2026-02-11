@@ -170,7 +170,6 @@ export function PlanillaTable({
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
       alert("No se pudo descargar el Excel");
     }
   };

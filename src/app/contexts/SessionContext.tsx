@@ -29,11 +29,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const logoutImpl = useCallback(
     async (reason?: string) => {
       if (isLoggingOutRef.current) {
-        console.log("[SESSION_CONTEXT] Logout already in progress.");
+
         return;
       }
       isLoggingOutRef.current = true;
-      console.log(`[SESSION_CONTEXT] Logging out. Reason: ${reason || "No reason specified"}`);
+  
       try {
         // We don't care about the result of the logout API call
         await fetch("/api/logout", {
@@ -77,7 +77,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const response = await originalFetch(input, init);
 
         if (response.status === 401 && !init.__retry) {
-        console.log(`[SESSION_CONTEXT] Detected 401 from ${response.url}. Triggering logout.`);
+      
         await logout(LOGOUT_MESSAGE);
 
         // ✅ Cortamos correctamente el flujo
@@ -98,11 +98,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await fetch("/api/verificar-sesion");
         if (!res.ok) {
-          console.log("[SESSION_CONTEXT] Periodic check failed. Logging out.");
+
           await logout(LOGOUT_MESSAGE);
         }
       } catch (error) {
-        console.error("[SESSION_CONTEXT] Error in periodic session check:", error);
+
       }
     };
 

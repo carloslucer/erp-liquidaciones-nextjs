@@ -15,7 +15,6 @@ export async function POST(request) {
     const data = await response.json()
 
     if (!response.ok) {
-      console.log("entre en el lugar correcto")
       return NextResponse.json({ message: data.message || 'Credenciales inválidas' }, { status: 401 })
     }
 
@@ -34,7 +33,6 @@ export async function POST(request) {
     return res
 
   } catch (error) {
-    console.error("Error en login:", error.message)
     return NextResponse.json({ message: "Servicio no Disponible" }, { status: 403 })
   }
 }

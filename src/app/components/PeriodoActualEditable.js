@@ -20,7 +20,7 @@ export default function PeriodoActualEditable() {
         setPeriodo(fecha); // o según la estructura
       })
       .catch((error) => {
-        console.error("Error al obtener el periodo:", error);
+        // Error al obtener el periodo
       });
   };
 
@@ -34,10 +34,7 @@ export default function PeriodoActualEditable() {
   }, []);
 
   const actualizarPeriodo = async () => {
-    console.log("actualizacion periodo")
     const fechaActual = new Date().toISOString()
-    console.log(fechaActual)
-    console.log(periodo)
     if (!periodo) return;
     setCargando(true);
     try {
