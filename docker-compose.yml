@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  next:
+    image: next-planillas
+    container_name: next-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
