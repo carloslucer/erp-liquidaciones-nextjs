@@ -63,7 +63,7 @@ export const ButtonPrimary = ({
   <button
     {...props}
     className={cn(
-      "h-9 bg-[#2563EB] text-white text-sm font-semibold px-3.5 py-2 rounded-[4px] hover:bg-[#1D4ED8] disabled:opacity-60 disabled:cursor-not-allowed",
+      "h-[26px] bg-[#2563EB] text-white text-[11px] font-semibold px-[10px] py-[4px] rounded-[4px] hover:bg-[#1D4ED8] disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_1px_3px_rgba(37,99,235,.25)] transition-all duration-150",
       className
     )}
   />
@@ -76,7 +76,48 @@ export const ButtonSecondary = ({
   <button
     {...props}
     className={cn(
-      "h-9 border border-[#D0D7E2] bg-white text-[#1F2933] text-sm font-semibold px-3.5 py-2 rounded-[4px] hover:bg-[#F1F5F9] disabled:opacity-60 disabled:cursor-not-allowed",
+      "h-[26px] border border-[#D0D7E2] bg-white text-[#1F2933] text-[11px] font-semibold px-[10px] py-[4px] rounded-[4px] hover:bg-[#F1F5F9] disabled:opacity-60 disabled:cursor-not-allowed",
+      className
+    )}
+  />
+);
+
+export const ButtonSuccess = ({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    {...props}
+    className={cn(
+      "h-[26px] bg-[#16A34A] text-white text-[11px] font-semibold px-[10px] py-[4px] rounded-[4px] hover:bg-[#15803D] disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_1px_3px_rgba(22,163,74,.25)] transition-all duration-150",
+      className
+    )}
+  />
+);
+
+/* ── Action buttons (medium) — for form actions: Buscar, Limpiar, etc. ── */
+
+export const ActionButtonPrimary = ({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    {...props}
+    className={cn(
+      "h-[38px] bg-[#2563EB] text-white text-[13px] font-semibold px-5 py-2 rounded-md hover:bg-[#1D4ED8] disabled:opacity-60 disabled:cursor-not-allowed shadow-[0_2px_6px_rgba(37,99,235,.35)] transition-all duration-150",
+      className
+    )}
+  />
+);
+
+export const ActionButtonSecondary = ({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    {...props}
+    className={cn(
+      "h-[38px] border border-[#D0D7E2] bg-white text-[#1F2933] text-[13px] font-semibold px-5 py-2 rounded-md hover:bg-[#F1F5F9] disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-150",
       className
     )}
   />

@@ -16,109 +16,74 @@ type SessionContextType = {
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
-function usePersistentCallback<T extends (...args: any[]) => any>(cb: T) {
-  const ref = useRef(cb);
-  ref.current = cb;
-  return useCallback((...args: Parameters<T>) => ref.current(...args), []);
-}
+const LOGOUT_MESSAGE =
+  "Tu sesión ha expirado. Por favor, inicia sesión nuevamente para continuar.";
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const isLoggingOutRef = useRef(false);
+  const loggingOut = useRef(false);
 
-  const logoutImpl = useCallback(
+  const logout = useCallback(
     async (reason?: string) => {
-      if (isLoggingOutRef.current) {
+      if (loggingOut.current) return;
+      loggingOut.current = true;
 
-        return;
-      }
-      isLoggingOutRef.current = true;
-  
       try {
-        // We don't care about the result of the logout API call
         await fetch("/api/logout", {
           method: "POST",
           credentials: "include",
         }).catch(() => {});
       } finally {
-        if (reason) {
-          toast.error(reason);
-        } else {
-          toast.success("Sesión finalizada");
-        }
-      
+        toast[reason ? "error" : "success"](reason || "Sesión finalizada");
         router.push("/login");
-        isLoggingOutRef.current = false;
+        setTimeout(() => { loggingOut.current = false; }, 1000);
       }
     },
     [router]
   );
 
-  const logout = usePersistentCallback(logoutImpl);
+  // Ref estable para usar dentro del interceptor
+  const logoutRef = useRef(logout);
+  logoutRef.current = logout;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const path = window.location.pathname;
+    if (path === "/login" || path === "/") return;
+
+    // ═══════════════════════════════════════════
+    // ÚNICO MECANISMO: Interceptor de fetch → 401 = logout
+    // El backend ES la fuente de verdad.
+    // Cada request que hagas ya valida el token.
+    // ═══════════════════════════════════════════
     const originalFetch = window.fetch.bind(window);
-    const LOGOUT_MESSAGE =
-      "Tu sesión ha expirado. Por favor, inicia sesión nuevamente para continuar.";
+    const skipUrls = ["/api/logout", "/api/login"];
 
-    // --- INTERCEPTOR DE FETCH ---
-    // Intercepta TODAS las llamadas fetch para detectar 401.
-    const patchedFetch: typeof fetch = async (
-      input,
-      init: RequestInit & { __retry?: boolean } = {}
-    ) => {
-      // Evita interceptar las llamadas que hace la propia función de logout
-      if (String(input).includes("/api/logout")) {
-        return originalFetch(input, init);
-      }
-
+    window.fetch = async (input, init?: RequestInit) => {
       const response = await originalFetch(input, init);
+      const url = typeof input === "string" ? input : (input as Request).url;
 
-        if (response.status === 401 && !init.__retry) {
-      
-        await logout(LOGOUT_MESSAGE);
-
-        // ✅ Cortamos correctamente el flujo
-        throw new Error("SESSION_EXPIRED");
+      if (
+        response.status === 401 &&
+        !skipUrls.some((s) => url.includes(s))
+      ) {
+        logoutRef.current(LOGOUT_MESSAGE);
       }
-
 
       return response;
     };
-    
-    window.fetch = patchedFetch;
 
-    // --- VERIFICACIÓN PERIÓDICA ---
-    // Como fallback, verifica la sesión periódicamente por si el usuario está inactivo.
-    let intervalId: NodeJS.Timeout | null = null;
-    
-    const checkSession = async () => {
-      try {
-        const res = await fetch("/api/verificar-sesion");
-        if (!res.ok) {
-
-          await logout(LOGOUT_MESSAGE);
-        }
-      } catch (error) {
-
-      }
-    };
-
-    // Inicia la verificación
-    if (window.location.pathname === "/login") return;
-    checkSession();
-    intervalId = setInterval(checkSession, 5 * 60 * 1000); // cada 5 minutos
-
-    // Cleanup
     return () => {
       window.fetch = originalFetch;
-      if (intervalId) clearInterval(intervalId);
     };
-  }, [logout]);
+  }, []);
 
-  return <SessionContext.Provider value={{ logout }}>{children}</SessionContext.Provider>;
+  return (
+    <SessionContext.Provider value={{ logout }}>
+      {children}
+    </SessionContext.Provider>
+  );
 }
 
 export function useSession() {

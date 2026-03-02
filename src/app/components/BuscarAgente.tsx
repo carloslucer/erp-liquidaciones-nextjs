@@ -1,12 +1,17 @@
 ﻿"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Agente } from "./types";
 import { PageShell, SectionHeader, AlertBox } from "./CorporateUI";
 import { SearchPanel } from "./SearchPanel";
 import { ResultadosTable } from "./ResultadosTable";
-import { usePlanillaSelection } from "../contexts/PlanillaSelectionContext";
+import { PlanillaTable } from "./PlanillaTable";
+
+type PlanillaItem = {
+  descripcion: string;
+  titulo: string;
+  meses: Record<string, number>;
+};
 
 type Props = {
   onSelect?: (agente: Agente) => void;
@@ -33,9 +38,6 @@ function isSoloNumeros(q: string) {
 }
 
 export default function BuscarAgente({ onSelect }: Props) {
-  const { setDocumentoSeleccionado } = usePlanillaSelection();
-  const router = useRouter();
-
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -43,6 +45,13 @@ export default function BuscarAgente({ onSelect }: Props) {
   const [sugLoading, setSugLoading] = useState(false);
   const [sugerencias, setSugerencias] = useState<Agente[]>([]);
   const [showSug, setShowSug] = useState(false);
+
+  // Estado para mostrar PlanillaTable
+  const [planillaData, setPlanillaData] = useState<PlanillaItem[] | null>(null);
+  const [planillaDocumento, setPlanillaDocumento] = useState("");
+  const [planillaPeriodo, setPlanillaPeriodo] = useState("");
+  const [planillaAgente, setPlanillaAgente] = useState<Record<string, any> | null>(null);
+  const [loadingPlanilla, setLoadingPlanilla] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const sugAbortRef = useRef<AbortController | null>(null);
@@ -173,6 +182,59 @@ export default function BuscarAgente({ onSelect }: Props) {
     setShowSug(false);
   }
 
+  async function verLiquidacionActual(agente: Agente) {
+    const currentYear = new Date().getFullYear().toString();
+    const doc = agente.documento;
+
+    setLoadingPlanilla(true);
+    setError("");
+
+    try {
+      const res = await fetch(
+        `/api/planilla?documento=${encodeURIComponent(doc)}&periodo=${encodeURIComponent(currentYear)}`,
+        { cache: "no-store" }
+      );
+
+      const payload = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error(`No se encontró liquidación para el año ${currentYear}.`);
+        }
+        throw new Error(payload?.error || "Error al cargar la liquidación.");
+      }
+
+      setPlanillaData(payload as PlanillaItem[]);
+      setPlanillaDocumento(doc);
+      setPlanillaPeriodo(currentYear);
+
+      // Intentar cargar info del agente
+      try {
+        const agRes = await fetch(
+          `/api/agentes/idyperiodo?documento=${encodeURIComponent(doc)}&periodo=${encodeURIComponent(currentYear)}`,
+          { cache: "no-store" }
+        );
+
+        if (agRes.ok) {
+          const agPayload = await agRes.json().catch(() => null);
+          if (Array.isArray(agPayload)) {
+            setPlanillaAgente(agPayload.length > 0 ? agPayload[0] : null);
+          } else {
+            setPlanillaAgente(agPayload ?? null);
+          }
+        } else {
+          setPlanillaAgente(null);
+        }
+      } catch (e) {
+        setPlanillaAgente(null);
+      }
+    } catch (err: any) {
+      setError(err?.message || "Error al cargar la liquidación.");
+    } finally {
+      setLoadingPlanilla(false);
+    }
+  }
+
   function elegirSugerencia(agente: Agente) {
     setQ(agente.nya?.trim() || agente.documento);
     setShowSug(false);
@@ -198,6 +260,24 @@ export default function BuscarAgente({ onSelect }: Props) {
   const handleInputBlur = () => {
     setTimeout(() => setShowSug(false), 120);
   };
+
+  // Si hay datos de planilla, mostrar PlanillaTable
+  if (planillaData) {
+    return (
+      <div className="fade-enter-active">
+        <PlanillaTable
+          data={planillaData}
+          documento={planillaDocumento}
+          periodo={planillaPeriodo}
+          agente={planillaAgente}
+          onBack={() => {
+            setPlanillaData(null);
+            setPlanillaAgente(null);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <PageShell>
@@ -226,11 +306,8 @@ export default function BuscarAgente({ onSelect }: Props) {
         resultados={resultados}
         emptyState={emptyState}
         onSelect={seleccionar}
-        onFocusPlanilla={(documento) => {
-          setDocumentoSeleccionado(documento);
-          router.push("/dashboard/planilla");
-        }}
-        loading={loading}
+        onVerLiquidacion={verLiquidacionActual}
+        loading={loading || loadingPlanilla}
       />
     </PageShell>
   );

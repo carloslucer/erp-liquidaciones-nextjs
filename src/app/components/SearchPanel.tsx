@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import React from "react";
-import { FilterBar, ButtonPrimary } from "./CorporateUI";
+import { FilterBar, ActionButtonPrimary } from "./CorporateUI";
 import { Agente } from "./types";
 
 type Props = {
@@ -109,13 +109,13 @@ export function SearchPanel({
         )}
       </div>
 
-      <ButtonPrimary
+      <ActionButtonPrimary
         type="submit"
         disabled={loading}
-        className="self-end h-9 rounded-[4px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white border-none"
+        className="self-end"
       >
         {loading ? "Preparando información..." : "Buscar"}
-      </ButtonPrimary>
+      </ActionButtonPrimary>
     </FilterBar>
   );
 }

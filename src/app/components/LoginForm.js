@@ -229,10 +229,12 @@ export default function LoginForm() {
             </form>
           </div>
         </div>
-      </main>
 
-      {/* Footer */}
-      <Footer dark={true} />
+        {/* Footer sobre la imagen */}
+        <div className="absolute bottom-0 w-full z-10">
+          <Footer transparent={true} />
+        </div>
+      </main>
     </div>
   )
 }

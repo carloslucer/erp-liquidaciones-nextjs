@@ -1,14 +1,16 @@
 "use client";
 
 import React from "react";
-import { ButtonSecondary, cn } from "./CorporateUI";
+import { useRouter } from "next/navigation";
+import { ButtonPrimary, ButtonSecondary, cn } from "./CorporateUI";
 import { Agente } from "./types";
+import { usePlanillaSelection } from "../contexts/PlanillaSelectionContext";
 
 type Props = {
   resultados: Agente[];
   emptyState: string;
   onSelect: (agente: Agente) => void;
-  onFocusPlanilla?: (documento: string) => void;
+  onVerLiquidacion?: (agente: Agente) => void;
   loading?: boolean;
 };
 
@@ -24,9 +26,25 @@ export function ResultadosTable({
   resultados,
   emptyState,
   onSelect,
-  onFocusPlanilla,
+  onVerLiquidacion,
   loading = false,
 }: Props) {
+  const router = useRouter();
+  const { setDocumentoSeleccionado } = usePlanillaSelection();
+  const currentYear = new Date().getFullYear();
+
+  const handlePlanillaActual = (agente: Agente) => {
+    if (onVerLiquidacion) {
+      onVerLiquidacion(agente);
+    } else {
+      onSelect(agente);
+    }
+  };
+
+  const handleOtrosAnios = (documento: string) => {
+    setDocumentoSeleccionado(documento);
+    router.push("/dashboard/planilla");
+  };
   return (
     <div className="border border-[#D0D7E2] bg-[#FFFFFF] rounded-lg flex-1 min-h-0 flex flex-col shadow-sm">
       {/* Header */}
@@ -81,7 +99,8 @@ export function ResultadosTable({
                         key={header}
                         className={cn(
                           "uppercase font-bold border border-black px-2 py-[4px] whitespace-nowrap",
-                          i === 0 || i === 5 || i > 6
+                          i === 10 && "sticky right-0 bg-black z-20 text-center",
+                          i === 10 ? "text-center" : i === 0 || i === 5 || i > 6
                             ? "text-right"
                             : "text-left"
                         )}
@@ -91,55 +110,64 @@ export function ResultadosTable({
                     ))}
                   </tr>
                 </thead>
-                <tbody className="text-sm">
+                <tbody className="text-[11px]">
                   {resultados.map((a, idx) => (
                     <tr
                       key={a.documento}
-                      className="hover:bg-[#F1F5F9] even:bg-[#FAFBFC]"
+                      className="hover:bg-[#F1F5F9] even:bg-[#FAFBFC] group"
                     >
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
                         {a.documento}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap">
                         {a.nya?.trim() || "-"}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap">
                         {a.empresa?.trim() || "-"}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap">
                         {formatExcepcion(a.excep)}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap">
                         {a.fechaWeb ?? "-"}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
                         {a.periodo}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
                         {a.nroPres ?? "-"}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
                         {a.cuil ?? "-"}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
+                      <td className="px-2 py-1.5 border-b border-[#D0D7E2] whitespace-nowrap text-right tabular-nums">
                         {a.cuitAgentRent?.trim() || "-"}
                       </td>
                       <td
-                        className="px-3 py-2 border-b border-[#D0D7E2] max-w-xs truncate"
+                        className="px-2 py-1.5 border-b border-[#D0D7E2] max-w-xs truncate"
                         title={a.descripAgentRent?.trim()}
                       >
                         {a.descripAgentRent?.trim() || "-"}
                       </td>
-                      <td className="px-3 py-2 border-b border-[#D0D7E2] text-sm whitespace-nowrap">
-                        <div className="flex items-center justify-end text-xs gap-2">
+                      <td className={cn(
+                        "px-2 py-1.5 border-b border-[#D0D7E2] text-sm whitespace-nowrap sticky right-0 shadow-[-4px_0_6px_rgba(0,0,0,0.05)] z-10",
+                        "group-hover:bg-[#F1F5F9]",
+                        idx % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"
+                      )}>
+                        <div className="flex items-center justify-center gap-1">
+                          <ButtonPrimary
+                            type="button"
+                            onClick={() => handlePlanillaActual(a)}
+                            title={`Ver liquidación del año ${currentYear}`}
+                          >
+                            Liq. {currentYear}
+                          </ButtonPrimary>
                           <ButtonSecondary
                             type="button"
-                            onClick={() => {
-                              onSelect(a);
-                              onFocusPlanilla?.(a.documento);
-                            }}
+                            onClick={() => handleOtrosAnios(a.documento)}
+                            title="Buscar liquidaciones de otros años"
                           >
-                            Ver Liquidación
+                            Anteriores
                           </ButtonSecondary>
                         </div>
                       </td>

@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { PlanillaTable } from "./PlanillaTable";
 import {
+  ActionButtonPrimary,
+  ActionButtonSecondary,
   AlertBox,
-  ButtonPrimary,
-  ButtonSecondary,
   FilterBar,
   PageShell,
   SectionHeader,
@@ -157,11 +157,11 @@ export default function PlanillaView() {
           <p className="text-xs text-[#6B7280]">Año (AAAA)</p>
         </div>
 
-        <ButtonPrimary type="submit" disabled={!canSearch || loading}>
+        <ActionButtonPrimary type="submit" disabled={!canSearch || loading}>
           {loading ? "Preparando información..." : "Buscar"}
-        </ButtonPrimary>
+        </ActionButtonPrimary>
 
-        <ButtonSecondary
+        <ActionButtonSecondary
           type="button"
           onClick={() => {
             setDocumento("");
@@ -172,7 +172,7 @@ export default function PlanillaView() {
           }}
         >
           Limpiar
-        </ButtonSecondary>
+        </ActionButtonSecondary>
       </FilterBar>
 
       {error && <AlertBox message={error} />}

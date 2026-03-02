@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiLock } from 'react-icons/fi'
 import MenuContent from '@/app/components/MenuContent'
+import { useSession } from '@/app/contexts/SessionContext'
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
@@ -17,6 +18,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { logout } = useSession()
 
   const [mounted, setMounted] = useState(false)
 
@@ -28,16 +30,8 @@ export default function Sidebar() {
   const closeMobile = () => setMobileOpen(false)
   
 
-
   const handleLogout = async () => {
-    try {
-      const res = await fetch('/api/logout', { method: 'POST' })
-      if (res.ok) {
-        router.push('/login')
-      }
-    } catch (error) {
-      // Opcionalmente, mostrar un toast de error al usuario
-    }
+    await logout()
   }
 
   const isActive = (href) => pathname === href

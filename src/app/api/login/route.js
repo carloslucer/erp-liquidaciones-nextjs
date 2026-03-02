@@ -18,16 +18,15 @@ export async function POST(request) {
       return NextResponse.json({ message: data.message || 'Credenciales inválidas' }, { status: 401 })
     }
 
-    // ✅ Crear una respuesta
+    const TOKEN_MAX_AGE = 60 * 20; // 20 minutos
     const res = NextResponse.json({ ok: true })
 
-    // ✅ Usar la API de cookies de NextResponse
     res.cookies.set('token', data.token, {
       httpOnly: true,
       secure: false, //process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 20, // 20 minutos
+      maxAge: TOKEN_MAX_AGE,
     })
 
     return res
