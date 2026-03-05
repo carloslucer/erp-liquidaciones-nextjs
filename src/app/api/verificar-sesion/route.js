@@ -24,7 +24,9 @@ export async function GET() {
     return new Response(null, { status: 401 });
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
+  const rol = cookieStore.get('rol')?.value || '';
+
+  return new Response(JSON.stringify({ ok: true, rol }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import Footer from './Footer'
+import { useSession } from '@/app/contexts/SessionContext'
 
 
 export default function LoginForm() {
@@ -14,6 +15,7 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const { setRol } = useSession();
 
   // Only show 'Sesión vencida' if redirected with ?expired=1
   // Solo mostrar "Sesión vencida" si viene de ?expired=1, y limpiar error si el usuario interactúa
@@ -85,6 +87,8 @@ export default function LoginForm() {
       }
 
       // 3. Éxito
+      const data = await res.json();
+      if (data?.rol) setRol(data.rol);
       toast.success('Bienvenido');
       router.push('/dashboard');
 

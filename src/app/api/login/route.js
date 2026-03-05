@@ -19,11 +19,20 @@ export async function POST(request) {
     }
 
     const TOKEN_MAX_AGE = 60 * 20; // 20 minutos
-    const res = NextResponse.json({ ok: true })
+    const rol = data.rol || ''
+    const res = NextResponse.json({ ok: true, rol })
 
     res.cookies.set('token', data.token, {
       httpOnly: true,
       secure: false, //process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: TOKEN_MAX_AGE,
+    })
+
+    res.cookies.set('rol', rol, {
+      httpOnly: true,
+      secure: false,
       sameSite: 'lax',
       path: '/',
       maxAge: TOKEN_MAX_AGE,

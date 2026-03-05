@@ -6,12 +6,15 @@ import React, {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 type SessionContextType = {
   logout: (reason?: string) => Promise<void>;
+  rol: string;
+  setRol: (rol: string) => void;
 };
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -22,6 +25,7 @@ const LOGOUT_MESSAGE =
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const loggingOut = useRef(false);
+  const [rol, setRol] = useState<string>("");
 
   const logout = useCallback(
     async (reason?: string) => {
@@ -34,6 +38,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           credentials: "include",
         }).catch(() => {});
       } finally {
+        setRol("");
         toast[reason ? "error" : "success"](reason || "Sesión finalizada");
         router.push("/login");
         setTimeout(() => { loggingOut.current = false; }, 1000);
@@ -41,6 +46,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     },
     [router]
   );
+
+  // Cargar rol al montar (desde verificar-sesion)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const path = window.location.pathname;
+    if (path === "/login" || path === "/") return;
+
+    fetch("/api/verificar-sesion", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.rol) setRol(data.rol);
+      })
+      .catch(() => {});
+  }, []);
 
   // Ref estable para usar dentro del interceptor
   const logoutRef = useRef(logout);
@@ -58,7 +77,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // Cada request que hagas ya valida el token.
     // ═══════════════════════════════════════════
     const originalFetch = window.fetch.bind(window);
-    const skipUrls = ["/api/logout", "/api/login"];
+    const skipUrls = ["/api/logout", "/api/login", "/api/auth/usuarios", "/api/auth/register"];
 
     window.fetch = async (input, init?: RequestInit) => {
       const response = await originalFetch(input, init);
@@ -80,7 +99,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <SessionContext.Provider value={{ logout }}>
+    <SessionContext.Provider value={{ logout, rol, setRol }}>
       {children}
     </SessionContext.Provider>
   );

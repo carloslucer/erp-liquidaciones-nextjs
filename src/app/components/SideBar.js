@@ -15,10 +15,12 @@ import { useSession } from '@/app/contexts/SessionContext'
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [declaracionOpen, setDeclaracionOpen] = useState(false)
+  const [declaracion572Open, setDeclaracion572Open] = useState(false)
+  const [usuariosOpen, setUsuariosOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const { logout } = useSession()
+  const { logout, rol } = useSession()
 
   const [mounted, setMounted] = useState(false)
 
@@ -71,9 +73,14 @@ export default function Sidebar() {
                 collapsed={false}
                 declaracionOpen={declaracionOpen}
                 setDeclaracionOpen={setDeclaracionOpen}
+                declaracion572Open={declaracion572Open}
+                setDeclaracion572Open={setDeclaracion572Open}
+                usuariosOpen={usuariosOpen}
+                setUsuariosOpen={setUsuariosOpen}
                 pathname={pathname}
                 onNavigate={() => setMobileOpen(false)}
                 onLogout={handleLogout}
+                rol={rol}
               />
             </motion.div>
           )}
@@ -113,9 +120,14 @@ export default function Sidebar() {
             collapsed={collapsed}
             declaracionOpen={declaracionOpen}
             setDeclaracionOpen={setDeclaracionOpen}
+            declaracion572Open={declaracion572Open}
+            setDeclaracion572Open={setDeclaracion572Open}
+            usuariosOpen={usuariosOpen}
+            setUsuariosOpen={setUsuariosOpen}
             pathname={pathname}
             onNavigate={() => {}}
             onLogout={handleLogout}
+            rol={rol}
           />
         </nav>
       </motion.aside>

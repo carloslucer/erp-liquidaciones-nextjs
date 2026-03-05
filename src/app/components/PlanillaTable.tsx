@@ -92,6 +92,8 @@ export function PlanillaTable({
 
   const [scale, setScale] = useState(1);
   const [loadingExcel, setLoadingExcel] = useState(false);
+  const [loadingPdf, setLoadingPdf] = useState(false);
+  const [pdfMsg, setPdfMsg] = useState<{ text: string; type: "error" | "success" } | null>(null);
 
   const isDesktop = () =>
     typeof window !== "undefined" &&
@@ -178,6 +180,49 @@ export function PlanillaTable({
     }
   };
 
+  const descargarPdf = async () => {
+    const cuit = agente?.cuil ? String(agente.cuil).trim().replace(/-/g, "") : "";
+    const nroPres = agente?.nroPres ? String(agente.nroPres).trim() : "";
+
+    if (!cuit || !nroPres) {
+      setPdfMsg({ text: "No se puede descargar: faltan datos de CUIL o número de presentación.", type: "error" });
+      return;
+    }
+
+    setPdfMsg(null);
+    setLoadingPdf(true);
+    try {
+      const res = await fetch(
+        `/api/declaraciones/pdf?cuit=${encodeURIComponent(cuit)}&periodo=${encodeURIComponent(periodo.trim())}&nroPresentacion=${encodeURIComponent(nroPres)}`,
+        { method: "GET", cache: "no-store" }
+      );
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          setPdfMsg({ text: "No se encontró el PDF de la declaración para este agente y período.", type: "error" });
+        } else {
+          setPdfMsg({ text: "No se pudo descargar el PDF. Intente nuevamente más tarde.", type: "error" });
+        }
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${cuit}_${periodo}_presentacion_${nroPres}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setPdfMsg({ text: "Error de conexión. No se pudo descargar el PDF.", type: "error" });
+    } finally {
+      setLoadingPdf(false);
+      setTimeout(() => setPdfMsg(null), 5000);
+    }
+  };
+
   return (
     <div className="w-[70vw] h-[85vh] flex items-start justify-center">
       {/* contenedor “hoja” (sin sombras, estilo Excel) */}
@@ -208,7 +253,7 @@ export function PlanillaTable({
                   transition-all duration-150
                   disabled:opacity-60 disabled:cursor-not-allowed
                 "
-                title={loadingExcel ? "Generando archivo..." : "Descargar Excel"}
+                title={loadingExcel ? "Generando archivo..." : "Descargar Planilla Liq Excel"}
               >
                 {loadingExcel ? (
                   <>
@@ -250,6 +295,66 @@ export function PlanillaTable({
                 )}
               </button>
               
+              {/* Botón PDF */}
+              <button
+                onClick={descargarPdf}
+                disabled={loadingPdf || !agente?.cuil || !agente?.nroPres}
+                className="
+                  flex items-center gap-2
+                  bg-[#DC2626] hover:bg-[#B91C1C]
+                  text-white text-[12px] font-semibold
+                  h-[32px] px-[12px] py-[6px] rounded-[4px]
+                  shadow-[0_1px_3px_rgba(220,38,38,.25)]
+                  transition-all duration-150
+                  disabled:opacity-60 disabled:cursor-not-allowed
+                "
+                title={
+                  !agente?.cuil || !agente?.nroPres
+                    ? "Sin datos de presentación para descargar"
+                    : loadingPdf
+                    ? "Descargando PDF..."
+                    : "Descargar PDF Declaración"
+                }
+              >
+                {loadingPdf ? (
+                  <>
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Descargando...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zm-3 9v5h4v-5h3l-5-4-5 4h3z" />
+                    </svg>
+                    F.572 PDF
+                  </>
+                )}
+              </button>
+
               <button
                 onClick={onBack}
                 className="
@@ -262,6 +367,26 @@ export function PlanillaTable({
               </button>
             </div>
           </div>
+
+          {/* Mensaje inline PDF */}
+          {pdfMsg && (
+            <div
+              className={`flex items-center gap-2 px-3 py-2 rounded-[4px] text-[12px] font-medium mt-2 transition-all duration-200 ${
+                pdfMsg.type === "error"
+                  ? "bg-[rgba(220,38,38,0.08)] border border-[#DC2626] text-[#DC2626]"
+                  : "bg-[rgba(22,163,74,0.08)] border border-[#16A34A] text-[#16A34A]"
+              }`}
+            >
+              <span>{pdfMsg.type === "error" ? "⚠" : "✓"}</span>
+              <span>{pdfMsg.text}</span>
+              <button
+                onClick={() => setPdfMsg(null)}
+                className="ml-auto text-[14px] leading-none opacity-60 hover:opacity-100"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Card con información del agente */}
           <div className="bg-white border border-[#D0D7E2] rounded-[4px] px-3 py-2">
@@ -334,6 +459,15 @@ export function PlanillaTable({
                     </span>
                   </div>
                 )}
+
+              <div>
+                <span className="text-[#6B7280]">Presentación N°:</span>{" "}
+                <span className="text-[#1F2933]">
+                  {agente && agente.nroPres
+                    ? String(agente.nroPres).trim()
+                    : "No declarado"}
+                </span>
+              </div>
             </div>
           </div>
         </div>

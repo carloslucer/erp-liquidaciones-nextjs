@@ -1,12 +1,12 @@
 "use client";
 
+import UploadPDF from "@/app/components/UploadPDF";
 import RoleGuard from "@/app/components/RoleGuard";
-import UploadXML from "@/app/components/UploadXML";
 
-export default function DeclaracioPage() {
+export default function ImportarPdfPage() {
   return (
     <RoleGuard allowedRoles={["ADMINISTRADOR", "LIQUIDADOR"]}>
-      <UploadXML />
+      <UploadPDF />
     </RoleGuard>
   );
 }

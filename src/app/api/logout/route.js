@@ -4,7 +4,7 @@ import { serialize } from 'cookie';
 export async function POST() {
   const response = NextResponse.json({ message: 'Sesión cerrada' });
 
-  const serialized = serialize('token', '', {
+  const serializedToken = serialize('token', '', {
     path: '/',
     httpOnly: true,
     secure: false,
@@ -12,7 +12,16 @@ export async function POST() {
     maxAge: 0,
   });
 
-  response.headers.set('Set-Cookie', serialized);
+  const serializedRol = serialize('rol', '', {
+    path: '/',
+    httpOnly: true,
+    secure: false,
+    sameSite: 'strict',
+    maxAge: 0,
+  });
+
+  response.headers.append('Set-Cookie', serializedToken);
+  response.headers.append('Set-Cookie', serializedRol);
 
   return response;
 }

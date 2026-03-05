@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
+import RoleGuard from '@/app/components/RoleGuard';
 
 export default function HistorialImportacion() {
   const [historial, setHistorial] = useState([]);
@@ -29,7 +30,7 @@ export default function HistorialImportacion() {
   }, [fechaFiltro, historial]);
 
   return (
-    <>
+    <RoleGuard allowedRoles={["ADMINISTRADOR", "LIQUIDADOR"]}>
       <Toaster
         position="top-center"
         richColors
@@ -121,6 +122,6 @@ export default function HistorialImportacion() {
           </div>
         </div>
       </div>
-    </>
+    </RoleGuard>
   );
 }
