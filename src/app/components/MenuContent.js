@@ -19,13 +19,6 @@ export default function MenuContent({ collapsed, declaracionOpen, setDeclaracion
 
     return (
         <>
-            {/* Badge de rol */}
-            {!collapsed && rol && (
-                <div className="mx-3 mt-2 mb-1 px-2 py-1 rounded bg-blue-600/20 text-blue-300 text-xs font-semibold text-center tracking-wide uppercase">
-                    {rol}
-                </div>
-            )}
-
             <Link
                 href="/dashboard"
                 onClick={onNavigate}
