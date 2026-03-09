@@ -47,12 +47,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     [router]
   );
 
-  // Cargar rol al montar (desde verificar-sesion)
+  // Cargar rol al montar: primero desde cookie (instantáneo), luego valida sesión con el backend
   useEffect(() => {
     if (typeof window === "undefined") return;
     const path = window.location.pathname;
     if (path === "/login" || path === "/") return;
 
+    // Leer rol desde cookie del navegador (no requiere red)
+    const match = document.cookie.match(/(?:^|;\s*)rol=([^;]*)/);
+    const rolFromCookie = match ? decodeURIComponent(match[1]) : "";
+    if (rolFromCookie) setRol(rolFromCookie);
+
+    // Validar sesión con el backend (en segundo plano)
     fetch("/api/verificar-sesion", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {

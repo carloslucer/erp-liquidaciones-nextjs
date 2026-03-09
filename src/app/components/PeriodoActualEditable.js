@@ -11,8 +11,9 @@ export default function PeriodoActualEditable() {
 
   // Obtener periodo actual
   const fetchPeriodo = async () => {
-    fetch('http://192.168.10.76:8080/api/periodo_liquidado', {
-      credentials: "include", // 👈 importante para enviar cookies
+    const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+    fetch(`${backendBase}/api/periodo_liquidado`, {
+      credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
@@ -45,7 +46,8 @@ export default function PeriodoActualEditable() {
         ultimaActualizacion: fechaActual,
       };
 
-      const res = await fetch('http://192.168.10.76:8080/api/periodo_liquidado', {
+      const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${backendBase}/api/periodo_liquidado`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

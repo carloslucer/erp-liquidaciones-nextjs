@@ -2,32 +2,54 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Toaster, toast } from 'sonner';
 
-interface ImportResult {
-  importados?: number | string[];
-  ignorados?: number | string[];
-  errores?: number | string[];
+interface StartResponse {
+  idProceso?: number;
+  totalArchivos?: number;
+  error?: string;
   mensaje?: string;
 }
 
-/** Devuelve la cantidad, ya sea que el campo venga como number o como array */
-function getCount(field?: number | string[]): number {
-  if (field == null) return 0;
-  if (typeof field === 'number') return field;
-  return field.length;
-}
-
-/** Devuelve los items como array; si es un número, devuelve array vacío */
-function getItems(field?: number | string[]): string[] {
-  if (Array.isArray(field)) return field;
-  return [];
+interface LoteResult {
+  idProceso: number;
+  cantidad: number;
+  estado: 'PENDIENTE' | 'EN_PROCESO' | 'COMPLETADO' | 'ERROR';
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  mensajeError: string | null;
 }
 
 export default function UploadPDF() {
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [result, setResult] = useState<ImportResult | null>(null);
+  const [procesando, setProcesando] = useState(false);
+  const [batchProgress, setBatchProgress] = useState('');
+  const [loteResults, setLoteResults] = useState<LoteResult[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /** Espera hasta que un proceso termine y devuelve su resultado */
+  const waitForProcess = (id: number): Promise<LoteResult> => {
+    return new Promise((resolve, reject) => {
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/declaraciones/proceso/${id}`);
+          if (res.status === 401) {
+            clearInterval(interval);
+            reject(new Error('SESSION_EXPIRED'));
+            return;
+          }
+          const data: LoteResult = await res.json();
+          if (data.estado === 'COMPLETADO' || data.estado === 'ERROR') {
+            clearInterval(interval);
+            resolve(data);
+          }
+        } catch (err) {
+          clearInterval(interval);
+          reject(err);
+        }
+      }, 2500);
+    });
+  };
 
   const ACCEPTED = '.pdf';
   const NAME_PATTERN = /^\d+_\d{4}_presentacion_\d+\.pdf$/i;
@@ -48,8 +70,10 @@ export default function UploadPDF() {
 
     if (rejected.length > 0) {
       toast.warning(
-        `${rejected.length} archivo(s) rechazados:\n${rejected.slice(0, 5).join('\n')}${rejected.length > 5 ? `\n...y ${rejected.length - 5} más` : ''}`,
-        { duration: 6000 }
+        rejected.length === 1
+          ? 'Un archivo fue rechazado por nombre o formato inválido.'
+          : `${rejected.length} archivos rechazados por nombre o formato inválido.`,
+        { duration: 4000 }
       );
     }
 
@@ -64,7 +88,7 @@ export default function UploadPDF() {
       const existing = new Set(prev.map((f) => f.name));
       return [...prev, ...valid.filter((f) => !existing.has(f.name))];
     });
-    setResult(null);
+    setLoteResults([]);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -76,7 +100,7 @@ export default function UploadPDF() {
       const existing = new Set(prev.map((f) => f.name));
       return [...prev, ...valid.filter((f) => !existing.has(f.name))];
     });
-    setResult(null);
+    setLoteResults([]);
   }, []);
 
   const removeFile = (name: string) => {
@@ -85,7 +109,7 @@ export default function UploadPDF() {
 
   const clearAll = () => {
     setFiles([]);
-    setResult(null);
+    setLoteResults([]);
     if (inputRef.current) inputRef.current.value = '';
   };
 
@@ -96,12 +120,10 @@ export default function UploadPDF() {
     }
 
     setUploading(true);
-    setResult(null);
+    setLoteResults([]);
 
     const formData = new FormData();
-    for (const file of files) {
-      formData.append('archivos', file);
-    }
+    for (const file of files) formData.append('archivos', file);
 
     try {
       const res = await fetch('/api/declaraciones/importar', {
@@ -111,37 +133,42 @@ export default function UploadPDF() {
 
       if (res.status === 401) {
         toast.error('Sesión expirada. Iniciá sesión nuevamente.');
-        setUploading(false);
         return;
       }
 
-      const data: ImportResult = await res.json();
+      const data: StartResponse = await res.json();
 
-      if (!res.ok) {
-        toast.error(data.mensaje || 'Error al importar archivos.');
-        setResult(data);
-        setUploading(false);
-        return;
-      }
-
-      setResult(data);
-
-      const importados = getCount(data.importados);
-      const ignorados = getCount(data.ignorados);
-      const errores = getCount(data.errores);
-
-      if (importados > 0 && errores === 0) {
-        toast.success(`${importados} archivo(s) importado(s) correctamente.`);
-      } else if (errores > 0) {
-        toast.error(`${errores} archivo(s) con error. Revisá el detalle.`);
-      } else if (ignorados > 0 && importados === 0) {
-        toast.info('Todos los archivos ya existían. Ninguno importado.');
+      if (!res.ok || !data.idProceso) {
+        throw new Error(data.error || data.mensaje || 'Error al iniciar la importación.');
       }
 
       setFiles([]);
       if (inputRef.current) inputRef.current.value = '';
-    } catch {
-      toast.error('Error de conexión con el servidor.');
+      setUploading(false);
+      setProcesando(true);
+      setBatchProgress(`Procesando ${data.totalArchivos ?? '?'} archivos…`);
+
+      // Esperar el único proceso
+      const resultado = await waitForProcess(data.idProceso);
+
+      setLoteResults([resultado]);
+      setProcesando(false);
+      setBatchProgress('');
+
+      if (resultado.estado === 'COMPLETADO') {
+        toast.success(`${resultado.cantidad} archivo(s) procesado(s) correctamente.`);
+      } else {
+        toast.error(resultado.mensajeError || 'El proceso finalizó con errores.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg === 'SESSION_EXPIRED') {
+        toast.error('Sesión expirada. Iniciá sesión nuevamente.');
+      } else {
+        toast.error(msg || 'Error de conexión con el servidor.');
+      }
+      setProcesando(false);
+      setBatchProgress('');
     } finally {
       setUploading(false);
     }
@@ -307,18 +334,18 @@ export default function UploadPDF() {
         {/* Submit button */}
         <button
           onClick={handleSubmit}
-          disabled={uploading || files.length === 0}
+          disabled={uploading || procesando || files.length === 0}
           style={{
             width: '100%',
             height: '44px',
-            background: uploading || files.length === 0 ? '#9CA3AF' : '#2563EB',
+            background: uploading || procesando || files.length === 0 ? '#9CA3AF' : '#2563EB',
             color: '#fff',
             borderRadius: '6px',
             border: 'none',
             fontWeight: 600,
             fontSize: '14px',
-            cursor: uploading || files.length === 0 ? 'not-allowed' : 'pointer',
-            boxShadow: uploading || files.length === 0 ? 'none' : '0 2px 6px rgba(37,99,235,.35)',
+            cursor: uploading || procesando || files.length === 0 ? 'not-allowed' : 'pointer',
+            boxShadow: uploading || procesando || files.length === 0 ? 'none' : '0 2px 6px rgba(37,99,235,.35)',
             transition: 'background 0.2s',
             display: 'flex',
             alignItems: 'center',
@@ -326,11 +353,11 @@ export default function UploadPDF() {
             gap: '8px',
           }}
           onMouseEnter={(e) => {
-            if (!uploading && files.length > 0)
+            if (!uploading && !procesando && files.length > 0)
               (e.target as HTMLButtonElement).style.background = '#1D4ED8';
           }}
           onMouseLeave={(e) => {
-            if (!uploading && files.length > 0)
+            if (!uploading && !procesando && files.length > 0)
               (e.target as HTMLButtonElement).style.background = '#2563EB';
           }}
         >
@@ -341,15 +368,41 @@ export default function UploadPDF() {
                 <span className="erp-dot" />
                 <span className="erp-dot" />
               </span>
-              Importando…
+              {batchProgress || 'Enviando archivos…'}
             </>
           ) : (
             'Importar Declaraciones'
           )}
         </button>
 
+        {/* Estado procesando (polling) */}
+        {procesando && (
+          <div
+            style={{
+              marginTop: '24px',
+              background: 'rgba(37,99,235,0.05)',
+              border: '1px solid rgba(37,99,235,0.2)',
+              borderRadius: '8px',
+              padding: '20px',
+              textAlign: 'center',
+            }}
+          >
+            <span className="erp-loader" style={{ display: 'inline-flex', gap: '6px', justifyContent: 'center', marginBottom: '10px' }}>
+              <span className="erp-dot" />
+              <span className="erp-dot" />
+              <span className="erp-dot" />
+            </span>
+            <p style={{ fontSize: '14px', fontWeight: 600, color: '#2563EB', margin: '0 0 4px' }}>
+              {batchProgress || 'Procesando archivos…'}
+            </p>
+            <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+              Esto puede tardar unos segundos. No cerrés esta ventana.
+            </p>
+          </div>
+        )}
+
         {/* Results */}
-        {result && (
+        {loteResults.length > 0 && !procesando && (
           <div style={{ marginTop: '24px' }}>
             <span
               style={{
@@ -364,44 +417,46 @@ export default function UploadPDF() {
             >
               Resultado de la importación
             </span>
-
-            {/* Importados */}
-            {getCount(result.importados) > 0 && (
-              <ResultBlock
-                title="Importados correctamente"
-                items={getItems(result.importados)}
-                count={getCount(result.importados)}
-                color="#16A34A"
-                bgColor="rgba(22,163,74,0.06)"
-              />
-            )}
-
-            {/* Ignorados */}
-            {getCount(result.ignorados) > 0 && (
-              <ResultBlock
-                title="Ya existían (ignorados)"
-                items={getItems(result.ignorados)}
-                count={getCount(result.ignorados)}
-                color="#F59E0B"
-                bgColor="rgba(245,158,11,0.06)"
-              />
-            )}
-
-            {/* Errores */}
-            {getCount(result.errores) > 0 && (
-              <ResultBlock
-                title="Errores"
-                items={getItems(result.errores)}
-                count={getCount(result.errores)}
-                color="#DC2626"
-                bgColor="rgba(220,38,38,0.06)"
-              />
-            )}
+            <div style={{ border: '1px solid #D0D7E2', borderRadius: '6px', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: '#E5EAF3' }}>
+                      <th style={thStyle}>Lote</th>
+                      <th style={{ ...thStyle, textAlign: 'center' }}>Archivos</th>
+                      <th style={{ ...thStyle, textAlign: 'center' }}>Estado</th>
+                      <th style={thStyle}>Inicio</th>
+                      <th style={thStyle}>Fin</th>
+                      <th style={{ ...thStyle, borderRight: 'none' }}>Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loteResults.map((l, i) => (
+                      <tr
+                        key={l.idProceso}
+                        style={{ background: i % 2 === 0 ? '#fff' : '#FAFBFC', borderTop: '1px solid #D0D7E2' }}
+                      >
+                        <td style={tdStyle}>#{l.idProceso}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>{l.cantidad}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          <EstadoBadge estado={l.estado} />
+                        </td>
+                        <td style={tdStyle}>{formatFecha(l.fechaInicio)}</td>
+                        <td style={tdStyle}>{formatFecha(l.fechaFin)}</td>
+                        <td style={{ ...tdStyle, color: '#DC2626', borderRight: 'none' }}>
+                          {l.mensajeError ?? '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Empty state */}
-        {!result && files.length === 0 && (
+        {loteResults.length === 0 && !procesando && files.length === 0 && (
           <div
             style={{
               textAlign: 'center',
@@ -418,54 +473,55 @@ export default function UploadPDF() {
   );
 }
 
-/* ---------- Sub-component: Result block ---------- */
-function ResultBlock({
-  title,
-  items,
-  count,
-  color,
-  bgColor,
-}: {
-  title: string;
-  items: string[];
-  count: number;
-  color: string;
-  bgColor: string;
-}) {
+const thStyle: React.CSSProperties = {
+  padding: '8px 12px',
+  fontWeight: 600,
+  color: '#1F2933',
+  textAlign: 'left',
+  fontSize: '12px',
+  borderRight: '1px solid #D0D7E2',
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: '8px 12px',
+  color: '#1F2933',
+  borderRight: '1px solid #D0D7E2',
+  fontFamily: 'JetBrains Mono, monospace',
+  fontSize: '12px',
+  whiteSpace: 'nowrap',
+};
+
+function formatFecha(fecha: string | null): string {
+  if (!fecha) return '—';
+  try {
+    return new Date(fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch {
+    return fecha;
+  }
+}
+
+function EstadoBadge({ estado }: { estado: LoteResult['estado'] }) {
+  const map: Record<LoteResult['estado'], { label: string; color: string; bg: string }> = {
+    PENDIENTE:  { label: 'Pendiente',  color: '#6B7280', bg: '#F3F4F6' },
+    EN_PROCESO: { label: 'En proceso', color: '#2563EB', bg: 'rgba(37,99,235,0.08)' },
+    COMPLETADO: { label: 'Completado', color: '#16A34A', bg: 'rgba(22,163,74,0.08)' },
+    ERROR:      { label: 'Error',      color: '#DC2626', bg: 'rgba(220,38,38,0.08)' },
+  };
+  const s = map[estado] ?? map.PENDIENTE;
   return (
-    <div
+    <span
       style={{
-        background: bgColor,
-        border: `1px solid ${color}20`,
-        borderRadius: '6px',
-        padding: '12px',
-        marginBottom: '12px',
+        display: 'inline-block',
+        padding: '2px 8px',
+        borderRadius: '4px',
+        fontWeight: 600,
+        fontSize: '11px',
+        color: s.color,
+        background: s.bg,
+        fontFamily: "'Inter', sans-serif",
       }}
     >
-      <p style={{ fontSize: '13px', fontWeight: 600, color, marginBottom: '6px' }}>
-        {title} ({count})
-      </p>
-      {items.length > 0 ? (
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-          {items.map((item, i) => (
-            <li
-              key={i}
-              style={{
-                fontSize: '12px',
-                color: '#1F2933',
-                fontFamily: 'JetBrains Mono, monospace',
-                padding: '2px 0',
-              }}
-            >
-              • {item}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
-          {count} archivo(s) procesado(s).
-        </p>
-      )}
-    </div>
+      {s.label}
+    </span>
   );
 }

@@ -9,9 +9,9 @@ export async function GET() {
     return new Response(null, { status: 401 });
   }
 
-  const res = await fetch('http://192.168.10.76:8080/api/auth/check', {
+  const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const res = await fetch(`${backendBase}/api/auth/check`, {
     method: 'GET',
-    credentials: 'include',
     headers: {
       'Authorization': `Bearer ${token}`,
     },

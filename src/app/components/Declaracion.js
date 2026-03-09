@@ -16,8 +16,9 @@ export default function DeclaracionXml() {
 
   const checkEstado = async () => {
     try {
-      const res = await fetch('http://192.168.10.76:8080/api/import/estado',{
-        method:'GET',
+      const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${backendBase}/api/import/estado`, {
+        method: 'GET',
         credentials: 'include'
       });
       const texto = await res.text();
@@ -54,7 +55,8 @@ export default function DeclaracionXml() {
     }
 
     try {
-      const res = await fetch("http://192.168.10.76:8080/api/import/xml", {
+      const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const res = await fetch(`${backendBase}/api/import/xml`, {
         method: "POST",
         credentials: 'include',
         body: formData,

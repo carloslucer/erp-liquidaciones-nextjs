@@ -10,7 +10,7 @@ export default function HistorialImportacion() {
   const [historialFiltrado, setHistorialFiltrado] = useState([]);
 
   useEffect(() => {
-    fetch('http://192.168.10.76:8080/api/import/historial', {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/historial`, {
       credentials: 'include',
     })
       .then((res) => res.json())
