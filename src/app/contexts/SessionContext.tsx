@@ -22,10 +22,21 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 const LOGOUT_MESSAGE =
   "Tu sesión ha expirado. Por favor, inicia sesión nuevamente para continuar.";
 
+const ROL_KEY = "sig_rol";
+
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const loggingOut = useRef(false);
-  const [rol, setRol] = useState<string>("");
+  const [rol, setRolState] = useState<string>("");
+
+  // Wrapper: persiste en localStorage para sobrevivir cierre de ventana
+  const setRol = useCallback((newRol: string) => {
+    setRolState(newRol);
+    if (typeof window !== "undefined") {
+      if (newRol) localStorage.setItem(ROL_KEY, newRol);
+      else localStorage.removeItem(ROL_KEY);
+    }
+  }, []);
 
   const logout = useCallback(
     async (reason?: string) => {
@@ -44,28 +55,33 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => { loggingOut.current = false; }, 1000);
       }
     },
-    [router]
+    [router, setRol]
   );
 
-  // Cargar rol al montar: primero desde cookie (instantáneo), luego valida sesión con el backend
+  // Cargar rol al montar: siempre desde localStorage (instantáneo, sin red),
+  // y validar con el backend solo si no estamos en /login
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const path = window.location.pathname;
-    if (path === "/login" || path === "/") return;
 
-    // Leer rol desde cookie del navegador (no requiere red)
+    // 1. Leer rol desde localStorage (sobrevive cierre del navegador, sin expiración)
+    const rolFromStorage = localStorage.getItem(ROL_KEY) || "";
+    // 2. Fallback: leer desde cookie
     const match = document.cookie.match(/(?:^|;\s*)rol=([^;]*)/);
     const rolFromCookie = match ? decodeURIComponent(match[1]) : "";
-    if (rolFromCookie) setRol(rolFromCookie);
+    const initialRol = rolFromStorage || rolFromCookie;
+    if (initialRol) setRolState(initialRol); // setRolState directo para no re-escribir localStorage
 
-    // Validar sesión con el backend (en segundo plano)
+    // 3. Validar con el backend solo fuera del login (evita llamada innecesaria)
+    const path = window.location.pathname;
+    if (path === "/login") return;
+
     fetch("/api/verificar-sesion", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.rol) setRol(data.rol);
       })
       .catch(() => {});
-  }, []);
+  }, [setRol]);
 
   // Ref estable para usar dentro del interceptor
   const logoutRef = useRef(logout);
@@ -75,7 +91,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return;
 
     const path = window.location.pathname;
-    if (path === "/login" || path === "/") return;
+    if (path === "/login") return;
 
     // ═══════════════════════════════════════════
     // ÚNICO MECANISMO: Interceptor de fetch → 401 = logout

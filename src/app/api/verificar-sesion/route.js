@@ -24,7 +24,8 @@ export async function GET() {
     return new Response(null, { status: 401 });
   }
 
-  const rol = cookieStore.get('rol')?.value || '';
+  const data = await res.json().catch(() => ({}));
+  const rol = data.rol || cookieStore.get('rol')?.value || '';
 
   return new Response(JSON.stringify({ ok: true, rol }), {
     status: 200,
