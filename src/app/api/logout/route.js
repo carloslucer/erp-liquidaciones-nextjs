@@ -3,12 +3,12 @@ import { serialize } from 'cookie';
 
 export async function POST() {
   const response = NextResponse.json({ message: 'Sesión cerrada' });
-  const isProduction = process.env.NODE_ENV === 'production';
+  const secureCookie = process.env.COOKIE_SECURE === 'true';
 
   const serializedToken = serialize('token', '', {
     path: '/',
     httpOnly: true,
-    secure: isProduction,
+    secure: secureCookie,
     sameSite: 'strict',
     maxAge: 0,
   });
@@ -16,7 +16,7 @@ export async function POST() {
   const serializedRol = serialize('rol', '', {
     path: '/',
     httpOnly: false,
-    secure: isProduction,
+    secure: secureCookie,
     sameSite: 'strict',
     maxAge: 0,
   });
