@@ -1,6 +1,5 @@
 'use client'
 
-
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -12,9 +11,9 @@ import { useSession } from '@/app/contexts/SessionContext'
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const { setRol } = useSession();
 
   // Only show 'Sesión vencida' if redirected with ?expired=1
@@ -40,7 +39,7 @@ export default function LoginForm() {
     // eslint-disable-next-line
   }, [searchParams]);
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isLoading) return;
 
@@ -51,8 +50,8 @@ export default function LoginForm() {
     }
     toast.dismiss();
 
-    const usuario = e.currentTarget.usuario.value.trim();
-    const clave = e.currentTarget.clave.value;
+    const usuario = (e.currentTarget.elements.namedItem('usuario') as HTMLInputElement).value.trim();
+    const clave = (e.currentTarget.elements.namedItem('clave') as HTMLInputElement).value;
 
     try {
       const res = await fetch('/api/login', {
@@ -200,7 +199,7 @@ export default function LoginForm() {
               </div>
 
               {error && (
-                <div className="rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+                <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                   {error}
                 </div>
               )}
@@ -208,14 +207,14 @@ export default function LoginForm() {
               <button
                 type="submit"
                 disabled={isLoading}
-                aria-busy={isLoading}
-                className={`w-full rounded bg-[#0ea5e9] py-2.5 text-sm font-semibold text-white transition
-                  ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#0284c7]'}
-                `}
+                className="w-full rounded bg-[#1E2A4A] py-2.5 text-sm font-semibold text-white transition hover:bg-[#263561] disabled:opacity-60"
               >
                 {isLoading ? (
-                  <span className="inline-flex items-center justify-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
                     Ingresando…
                   </span>
                 ) : (

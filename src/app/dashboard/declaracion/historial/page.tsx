@@ -4,10 +4,16 @@ import { useEffect, useState } from 'react';
 import { Toaster } from 'sonner';
 import RoleGuard from '@/app/components/RoleGuard';
 
+type HistorialItem = {
+  fecha: string;
+  nombreArchivo: string;
+  resultado: string;
+};
+
 export default function HistorialImportacion() {
-  const [historial, setHistorial] = useState([]);
-  const [fechaFiltro, setFechaFiltro] = useState('');
-  const [historialFiltrado, setHistorialFiltrado] = useState([]);
+  const [historial, setHistorial] = useState<HistorialItem[]>([]);
+  const [fechaFiltro, setFechaFiltro] = useState<string>('');
+  const [historialFiltrado, setHistorialFiltrado] = useState<HistorialItem[]>([]);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/import/historial`, {
@@ -89,7 +95,7 @@ export default function HistorialImportacion() {
                 {historialFiltrado.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="3"
+                      colSpan={3}
                       className="py-6 text-center text-gray-400 italic select-none"
                     >
                       No hay registros para esa fecha.

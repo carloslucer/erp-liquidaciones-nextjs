@@ -4,15 +4,13 @@ import Sidebar from '@/app/components/SideBar';
 import { PlanillaSelectionProvider } from '../contexts/PlanillaSelectionContext';
 import Footer from '@/app/components/Footer';
 
-export default async function DashboardLayout({ children }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
 
   if (!token) {
     redirect('/login');
   }
-
-  
 
   return (
     <PlanillaSelectionProvider>

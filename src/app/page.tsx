@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const validarSesion = async () => {
@@ -44,7 +44,3 @@ export default function HomePage() {
 
   return null;
 }
-
-
-
-

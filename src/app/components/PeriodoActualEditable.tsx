@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { CalendarDays, Pencil } from 'lucide-react';
-import { toast, Toaster } from 'sonner'
+import { toast, Toaster } from 'sonner';
+
 export default function PeriodoActualEditable() {
-  const [periodo, setPeriodo] = useState('');
-  const [ultimaActualizacion, setUltimaActualizacion] = useState('');
-  const [editando, setEditando] = useState(false);
-  const [cargando, setCargando] = useState(false);
+  const [periodo, setPeriodo] = useState<string>('');
+  const [ultimaActualizacion, setUltimaActualizacion] = useState<string>('');
+  const [editando, setEditando] = useState<boolean>(false);
+  const [cargando, setCargando] = useState<boolean>(false);
 
   // Obtener periodo actual
   const fetchPeriodo = async () => {

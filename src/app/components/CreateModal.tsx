@@ -1,24 +1,25 @@
 import { useState } from 'react';
+import type { CreateModalProps, ProductoForm } from './types';
 
-export default function CreateModal({ onCreate }) {
-  const [form, setForm] = useState({ nombre: '', cantidad: '', precio: '' });
+export default function CreateModal({ onCreate }: CreateModalProps) {
+  const [form, setForm] = useState<ProductoForm>({ nombre: '', cantidad: '', precio: '' });
 
-  const handleChange = e => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onCreate({ ...form, cantidad: +form.cantidad, precio: +form.precio });
     // Cerrar modal manualmente
     const modalEl = document.getElementById('createModal');
-    const modal = window.bootstrap.Modal.getInstance(modalEl);
+    const modal = (window as any).bootstrap.Modal.getInstance(modalEl);
     modal.hide();
     setForm({ nombre: '', cantidad: '', precio: '' });
   };
 
   return (
-    <div className="modal fade shadow-md sm:rounded-lg" id="createModal" tabIndex="-1">
+    <div className="modal fade shadow-md sm:rounded-lg" id="createModal" tabIndex={-1}>
       <div className="modal-dialog ">
         <form className="modal-content" onSubmit={handleSubmit}>
           <div className="modal-header">

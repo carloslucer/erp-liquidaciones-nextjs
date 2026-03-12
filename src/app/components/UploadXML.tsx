@@ -1,15 +1,15 @@
 'use client';
-import React, { useEffect, useState,useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Toaster, toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 export default function UploadXML() {
   const router = useRouter();
-  const [estado, setEstado] = useState('');
-  const [estadoClass, setEstadoClass] = useState('text-green-600');
-  const [disabled, setDisabled] = useState(false);
-  const [files, setFiles] = useState([]);
-  const esperaFinRef = useRef(false);
+  const [estado, setEstado] = useState<string>('');
+  const [estadoClass, setEstadoClass] = useState<string>('text-green-600');
+  const [disabled, setDisabled] = useState<boolean>(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const esperaFinRef = useRef<boolean>(false);
 
   useEffect(() => {
     const interval = setInterval(checkEstado, 10000);
@@ -46,7 +46,7 @@ export default function UploadXML() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (files.length === 0) {
@@ -105,10 +105,12 @@ export default function UploadXML() {
               type="file"
               id="file"
               name="file"
-              webkitdirectory="true"
+              {...{ webkitdirectory: "true" }}
               multiple
               className="w-full border text-gray-400 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onChange={(e) => setFiles(e.target.files)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFiles(Array.from(e.target.files ?? []))
+              }
             />
           </div>
 

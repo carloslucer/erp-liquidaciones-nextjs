@@ -1,14 +1,24 @@
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
-import { FiMenu, FiChevronDown, FiChevronRight, FiFileText, FiUpload, FiUsers } from 'react-icons/fi'
-import { IoMdHome, IoIosArchive } from "react-icons/io";
-import { toast } from 'sonner'
+import { FiChevronDown, FiChevronRight, FiFileText, FiUpload, FiUsers, FiLock } from 'react-icons/fi'
+import { IoMdHome } from "react-icons/io";
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiLock } from 'react-icons/fi'
 import { puedeLiquidar, puedeSubirArchivos, puedeAdministrarUsuarios } from '@/app/lib/roles'
+import type { MenuContentProps } from './types'
 
-export default function MenuContent({ collapsed, declaracionOpen, setDeclaracionOpen, declaracion572Open, setDeclaracion572Open, usuariosOpen, setUsuariosOpen, pathname, onNavigate, onLogout, rol }) {
-    const isActive = (href) => pathname === href
+export default function MenuContent({
+    collapsed,
+    declaracionOpen,
+    setDeclaracionOpen,
+    declaracion572Open,
+    setDeclaracion572Open,
+    usuariosOpen,
+    setUsuariosOpen,
+    pathname,
+    onNavigate,
+    onLogout,
+    rol,
+}: MenuContentProps) {
+    const isActive = (href: string): boolean => pathname === href
     const isPlanillasActive = pathname.startsWith('/dashboard/agentes') || pathname.startsWith('/dashboard/planilla')
     const isDeclaracion572Active = pathname.startsWith('/dashboard/declaracion')
     const isUsuariosActive = pathname.startsWith('/dashboard/usuarios')

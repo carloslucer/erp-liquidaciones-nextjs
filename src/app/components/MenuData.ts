@@ -1,5 +1,6 @@
-// components/menuData.js
-const menuData = [
+import type { MenuGroup } from "./types";
+
+const menuData: MenuGroup[] = [
   {
     title: "Gestión de Usuarios",
     roles: ["admin"],

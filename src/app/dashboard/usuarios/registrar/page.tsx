@@ -9,25 +9,27 @@ import {
 } from "@/app/components/CorporateUI";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 
-const ROLES_VALIDOS = ["ADMINISTRADOR", "LIQUIDADOR", "CONTADOR"];
+const ROLES_VALIDOS = ["ADMINISTRADOR", "LIQUIDADOR", "CONTADOR"] as const;
 
-async function apiCall(url, options = {}) {
+type ApiResult = { ok: boolean; status: number; data: any };
+
+async function apiCall(url: string, options: RequestInit = {}): Promise<ApiResult> {
   const res = await fetch(url, { credentials: "include", ...options });
   const data = await res.json().catch(() => null);
   return { ok: res.ok, status: res.status, data };
 }
 
 function RegistrarContent() {
-  const [usuario, setUsuario]           = useState("");
-  const [nombre, setNombre]             = useState("");
-  const [clave, setClave]               = useState("");
-  const [confirmar, setConfirmar]       = useState("");
-  const [rol, setRol]                   = useState("LIQUIDADOR");
-  const [showClave, setShowClave]       = useState(false);
-  const [showConfirmar, setShowConfirmar] = useState(false);
-  const [regLoading, setRegLoading]     = useState(false);
-  const [regError, setRegError]         = useState("");
-  const [regOk, setRegOk]               = useState("");
+  const [usuario, setUsuario]             = useState<string>("");
+  const [nombre, setNombre]               = useState<string>("");
+  const [clave, setClave]                 = useState<string>("");
+  const [confirmar, setConfirmar]         = useState<string>("");
+  const [rol, setRol]                     = useState<string>("LIQUIDADOR");
+  const [showClave, setShowClave]         = useState<boolean>(false);
+  const [showConfirmar, setShowConfirmar] = useState<boolean>(false);
+  const [regLoading, setRegLoading]       = useState<boolean>(false);
+  const [regError, setRegError]           = useState<string>("");
+  const [regOk, setRegOk]                 = useState<string>("");
 
   const claveOk    = clave.length >= 6;
   const claveMatch = clave === confirmar && confirmar !== "";
@@ -35,7 +37,7 @@ function RegistrarContent() {
 
   function clearFeedback() { setRegError(""); setRegOk(""); }
 
-  async function handleRegister(e) {
+  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setRegError(""); setRegOk("");
     if (!usuario.trim()) { setRegError("El nombre de usuario es obligatorio."); return; }

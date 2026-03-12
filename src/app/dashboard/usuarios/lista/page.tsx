@@ -12,33 +12,47 @@ import {
 } from "@/app/components/CorporateUI";
 
 // --- constantes --------------------------------------------
-const ROLES_VALIDOS = ["ADMINISTRADOR", "LIQUIDADOR", "CONTADOR"];
+const ROLES_VALIDOS = ["ADMINISTRADOR", "LIQUIDADOR", "CONTADOR"] as const;
+type RolValido = typeof ROLES_VALIDOS[number];
 
-const ESTADO_BADGE = {
+const ESTADO_BADGE: Record<string, string> = {
   true:  "bg-[#D1FAE5] text-[#15803D]",
   false: "bg-[#FEE2E2] text-[#DC2626]",
 };
 
-const ROL_BADGE = {
+const ROL_BADGE: Record<string, string> = {
   ADMINISTRADOR: "bg-[#DBEAFE] text-[#1D4ED8]",
   LIQUIDADOR:    "bg-[#D1FAE5] text-[#15803D]",
   CONTADOR:      "bg-[#FEF3C7] text-[#B45309]",
 };
 
+// --- tipos -------------------------------------------------
+type UsuarioNorm = {
+  USUARIO: string;
+  NOMBRE: string;
+  ROL: string;
+  ACTIVO: boolean | number | string;
+};
+
+type ApiResult = { ok: boolean; status: number; data: any };
+type ToastState = { ok: boolean; msg: string } | null;
+type Errors = Partial<Record<"rol" | "clave" | "confirmar", string>>;
+type Feedback = { ok: boolean; msg: string } | null;
+
 // --- helpers -----------------------------------------------
-async function apiCall(url, options = {}) {
+async function apiCall(url: string, options: RequestInit = {}): Promise<ApiResult> {
   const res = await fetch(url, { credentials: "include", ...options });
   const data = await res.json().catch(() => null);
   return { ok: res.ok, status: res.status, data };
 }
 
-function esActivo(val) {
+function esActivo(val: unknown): boolean {
   return val === true || val === 1 || val === "S" || val === "1";
 }
 
 // Normaliza un usuario del backend a campos UPPERCASE
 // Soporta: {usuario, nombre, rol, activo} y {USUARIO, NOMBRE, ROL, ACTIVO}
-function normalizeUsuario(u) {
+function normalizeUsuario(u: any): UsuarioNorm {
   return {
     USUARIO: u.USUARIO ?? u.usuario ?? u.Username ?? u.username ?? "",
     NOMBRE:  u.NOMBRE  ?? u.nombre  ?? u.Name     ?? u.name     ?? "",
@@ -48,38 +62,42 @@ function normalizeUsuario(u) {
 }
 
 // --- Skeleton ----------------------------------------------
-function SkeletonRows({ cols = 5, rows = 6 }) {
-  return Array.from({ length: rows }).map((_, i) => (
-    <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"}>
-      {Array.from({ length: cols }).map((__, j) => (
-        <td key={j} className="px-3 py-[10px]">
-          <div className="skeleton h-4 rounded" style={{ width: j === 0 ? "55%" : "75%" }} />
-        </td>
+function SkeletonRows({ cols = 5, rows = 6 }: { cols?: number; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#FAFBFC]"}>
+          {Array.from({ length: cols }).map((__, j) => (
+            <td key={j} className="px-3 py-[10px]">
+              <div className="skeleton h-4 rounded" style={{ width: j === 0 ? "55%" : "75%" }} />
+            </td>
+          ))}
+        </tr>
       ))}
-    </tr>
-  ));
+    </>
+  );
 }
 
 // --- Modal Editar ------------------------------------------
-function ModalEditar({ usuario, onClose, onSuccess }) {
+function ModalEditar({ usuario, onClose, onSuccess }: { usuario: UsuarioNorm; onClose: () => void; onSuccess: () => void }) {
   const activo0 = esActivo(usuario.ACTIVO);
 
-  const [rol, setRol]             = useState(usuario.ROL ?? "");
-  const [activo, setActivo]       = useState(activo0);
-  const [clave, setClave]         = useState("");
-  const [confirmar, setConfirmar] = useState("");
-  const [showClave, setShowClave] = useState(false);
-  const [showConf, setShowConf]   = useState(false);
-  const [saving, setSaving]       = useState(false);
-  const [errors, setErrors]       = useState({});
-  const [feedback, setFeedback]   = useState(null);
+  const [rol, setRol]             = useState<string>(usuario.ROL ?? "");
+  const [activo, setActivo]       = useState<boolean>(activo0);
+  const [clave, setClave]         = useState<string>("");
+  const [confirmar, setConfirmar] = useState<string>("");
+  const [showClave, setShowClave] = useState<boolean>(false);
+  const [showConf, setShowConf]   = useState<boolean>(false);
+  const [saving, setSaving]       = useState<boolean>(false);
+  const [errors, setErrors]       = useState<Errors>({});
+  const [feedback, setFeedback]   = useState<Feedback>(null);
 
   const claveOk      = clave === "" || clave.length >= 6;
   const claveMatch   = clave === "" || (clave.length >= 6 && clave === confirmar);
   const cambiarClave = clave.trim() !== "";
 
-  function validate() {
-    const e = {};
+  function validate(): Errors {
+    const e: Errors = {};
     if (!rol) e.rol = "Selecciona un rol.";
     if (cambiarClave && clave.length < 6) e.clave = "Minimo 6 caracteres.";
     if (cambiarClave && clave !== confirmar) e.confirmar = "Las contrasenas no coinciden.";
@@ -93,7 +111,7 @@ function ModalEditar({ usuario, onClose, onSuccess }) {
     setSaving(true);
 
     const u = encodeURIComponent(usuario.USUARIO);
-    const errores = [];
+    const errores: string[] = [];
 
     // 1. Rol
     if (rol !== usuario.ROL) {
@@ -132,7 +150,7 @@ function ModalEditar({ usuario, onClose, onSuccess }) {
   }
 
   useEffect(() => {
-    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
@@ -295,7 +313,7 @@ function ModalEditar({ usuario, onClose, onSuccess }) {
 }
 
 // --- Fila tabla --------------------------------------------
-function UsuarioRow({ u, onEditar }) {
+function UsuarioRow({ u, onEditar }: { u: UsuarioNorm; onEditar: (u: UsuarioNorm) => void }) {
   const activo = esActivo(u.ACTIVO);
   return (
     <tr className="hover:bg-[#F1F5F9] transition-colors duration-100 border-b border-[#D0D7E2]">
@@ -329,12 +347,12 @@ function UsuarioRow({ u, onEditar }) {
 
 // --- Pagina principal --------------------------------------
 function ListaContent() {
-  const [usuarios, setUsuarios]       = useState([]);
-  const [listLoading, setListLoading] = useState(true);
-  const [listError, setListError]     = useState("");
-  const [toast, setToast]             = useState(null);
-  const [editando, setEditando]       = useState(null);
-  const toastTimer                    = useRef(null);
+  const [usuarios, setUsuarios]       = useState<UsuarioNorm[]>([]);
+  const [listLoading, setListLoading] = useState<boolean>(true);
+  const [listError, setListError]     = useState<string>("");
+  const [toast, setToast]             = useState<ToastState>(null);
+  const [editando, setEditando]       = useState<UsuarioNorm | null>(null);
+  const toastTimer                    = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cargarUsuarios = useCallback(async () => {
     setListLoading(true);
@@ -351,9 +369,9 @@ function ListaContent() {
 
   useEffect(() => { cargarUsuarios(); }, [cargarUsuarios]);
 
-  function showToast(ok, msg) {
+  function showToast(ok: boolean, msg: string) {
     setToast({ ok, msg });
-    clearTimeout(toastTimer.current);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 3500);
   }
 

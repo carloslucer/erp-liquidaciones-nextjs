@@ -1,28 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
 import { useRouter, usePathname } from 'next/navigation'
-import { FiMenu, FiChevronDown, FiChevronRight } from 'react-icons/fi'
-import { BsFiletypeXml } from "react-icons/bs";
-import { IoMdHome, IoIosArchive } from "react-icons/io";
-import { toast } from 'sonner'
+import { FiMenu } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiLock } from 'react-icons/fi'
 import MenuContent from '@/app/components/MenuContent'
 import { useSession } from '@/app/contexts/SessionContext'
 
 export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
-  const [declaracionOpen, setDeclaracionOpen] = useState(false)
-  const [declaracion572Open, setDeclaracion572Open] = useState(false)
-  const [usuariosOpen, setUsuariosOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState<boolean>(false)
+  const [declaracionOpen, setDeclaracionOpen] = useState<boolean>(false)
+  const [declaracion572Open, setDeclaracion572Open] = useState<boolean>(false)
+  const [usuariosOpen, setUsuariosOpen] = useState<boolean>(false)
   const pathname = usePathname()
   const router = useRouter()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState<boolean>(false)
   const { logout, rol } = useSession()
 
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState<boolean>(false)
 
   useEffect(() => {
     setMounted(true)
@@ -36,7 +31,7 @@ export default function Sidebar() {
     await logout()
   }
 
-  const isActive = (href) => pathname === href
+  const isActive = (href: string): boolean => pathname === href
   const desktopWidth = collapsed ? 64 : 256
  return (
     <>

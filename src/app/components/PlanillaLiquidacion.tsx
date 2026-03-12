@@ -1,4 +1,50 @@
 import React from "react";
+import type { PlanillaLiquidacionProps, MonthKey, PlanillaRowInput } from "./types";
+
+/* =========================
+   Tipos internos
+========================= */
+
+type NormalizedRow = {
+  type: "section" | "row" | "spacer";
+  titulo: string;
+  descripcion: string;
+  meses: Record<string, number | null>;
+};
+
+/* =========================
+   Meses
+========================= */
+
+const DEFAULT_MONTH_ORDER: MonthKey[] = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
+const DEFAULT_MONTH_LABELS: Record<MonthKey, string> = {
+  enero: "ENERO",
+  febrero: "FEBRERO",
+  marzo: "MARZO",
+  abril: "ABRIL",
+  mayo: "MAYO",
+  junio: "JUNIO",
+  julio: "JULIO",
+  agosto: "AGOSTO",
+  septiembre: "SEPTIEMBRE",
+  octubre: "OCTUBRE",
+  noviembre: "NOVIEMBRE",
+  diciembre: "DICIEMBRE",
+};
 
 /**
  * Planilla tipo Excel (Ganancias)
@@ -24,7 +70,7 @@ export default function PlanillaLiquidacion({
   // si querés forzar el orden y nombre de columnas:
   monthOrder = DEFAULT_MONTH_ORDER,
   monthLabels = DEFAULT_MONTH_LABELS,
-}) {
+}: PlanillaLiquidacionProps) {
   const normalized = normalizeRows(rows, monthOrder);
 
   return (
@@ -62,7 +108,7 @@ export default function PlanillaLiquidacion({
               }
 
               const isSection = row.type === "section";
-              const isTotal = row.type === "total"; // por si más adelante querés marcar totales
+              const isTotal = row.type === "total" as string; // por si más adelante querés marcar totales
 
               return (
                 <tr key={`${row.descripcion}-${idx}`}>
@@ -108,7 +154,7 @@ export default function PlanillaLiquidacion({
    Normalización de datos
 ========================= */
 
-function normalizeRows(rows, monthOrder) {
+function normalizeRows(rows: PlanillaRowInput[], monthOrder: MonthKey[]): NormalizedRow[] {
   // rows puede venir null/undefined
   const safe = Array.isArray(rows) ? rows : [];
 
@@ -120,7 +166,7 @@ function normalizeRows(rows, monthOrder) {
     const mesesIn = (r && typeof r.meses === "object" && r.meses) ? r.meses : {};
 
     // normalizo: aseguro que existan todas las claves del orden de meses
-    const meses = {};
+    const meses: Record<string, number | null> = {};
     for (const key of monthOrder) {
       const raw = mesesIn[key];
       meses[key] = toNumberOrNull(raw);
@@ -128,16 +174,16 @@ function normalizeRows(rows, monthOrder) {
 
     // reglas visuales
     if (titulo === "1") {
-      return { type: "section", titulo, descripcion, meses };
+      return { type: "section" as const, titulo, descripcion, meses };
     }
 
     // si en algún momento querés marcar totales:
     // if (descripcion.toUpperCase().includes("TOTAL") || descripcion.toUpperCase().includes("NETO")) ...
-    return { type: "row", titulo, descripcion, meses };
+    return { type: "row" as const, titulo, descripcion, meses };
   });
 }
 
-function toNumberOrNull(v) {
+function toNumberOrNull(v: unknown): number | null {
   if (v === null || v === undefined || v === "") return null;
   if (typeof v === "number" && Number.isFinite(v)) return v;
 
@@ -155,7 +201,7 @@ function toNumberOrNull(v) {
   return null;
 }
 
-function formatMoney(value) {
+function formatMoney(value: unknown): string {
   if (value === null || value === undefined) return "";
 
   const num = Number(value);
@@ -170,44 +216,10 @@ function formatMoney(value) {
 }
 
 /* =========================
-   Meses
-========================= */
-
-const DEFAULT_MONTH_ORDER = [
-  "enero",
-  "febrero",
-  "marzo",
-  "abril",
-  "mayo",
-  "junio",
-  "julio",
-  "agosto",
-  "septiembre",
-  "octubre",
-  "noviembre",
-  "diciembre",
-];
-
-const DEFAULT_MONTH_LABELS = {
-  enero: "ENERO",
-  febrero: "FEBRERO",
-  marzo: "MARZO",
-  abril: "ABRIL",
-  mayo: "MAYO",
-  junio: "JUNIO",
-  julio: "JULIO",
-  agosto: "AGOSTO",
-  septiembre: "SEPTIEMBRE",
-  octubre: "OCTUBRE",
-  noviembre: "NOVIEMBRE",
-  diciembre: "DICIEMBRE",
-};
-
-/* =========================
    Estilos (look Excel)
 ========================= */
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   page: {
     fontFamily: "Calibri, Arial, sans-serif",
     fontSize: 12,

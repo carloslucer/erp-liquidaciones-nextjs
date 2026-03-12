@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function LoginPage() {
           setIsAuthenticated(true);
           router.replace('/dashboard');
         } else {
-          setIsAuthenticated(false)
+          setIsAuthenticated(false);
         }
 
       } catch (err) {
@@ -36,17 +36,14 @@ export default function LoginPage() {
 
   }, [router]);
 
- 
-
-  if (isLoading) return (<>
-    <div className="flex justify-center items-center h-screen bg-white/80 animate-fade-in">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-    </div>
-  
+  if (isLoading) return (
+    <>
+      <div className="flex justify-center items-center h-screen bg-white/80 animate-fade-in">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      </div>
     </>
   );
 
-  if (!isAuthenticated) return <LoginForm />;// Si se autenticó, ya redirigió
+  if (!isAuthenticated) return <LoginForm />; // Si se autenticó, ya redirigió
   return null;
-
 }

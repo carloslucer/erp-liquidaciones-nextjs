@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { serialize } from 'cookie';
 
-export async function POST() {
+export async function POST(): Promise<NextResponse> {
   const response = NextResponse.json({ message: 'Sesión cerrada' });
   const secureCookie = process.env.COOKIE_SECURE === 'true';
 
@@ -26,4 +26,3 @@ export async function POST() {
 
   return response;
 }
-
