@@ -32,7 +32,7 @@ export async function PUT(
     );
   }
 
-  const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const backendBase = process.env.API_BASE_URL;
 
   try {
     const backendRes = await fetch(

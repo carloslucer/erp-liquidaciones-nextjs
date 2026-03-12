@@ -1,12 +1,17 @@
 {
-  "name": "front-next",
-  "version": "0.1.0",
+  "name": "dashb-sistema-ganancias",
+  "version": "1.0.0",
+  "description": "Dashboard ERP para gestión y liquidación de ganancias. Desarrollado con Next.js 15, React 19 y TypeScript.",
+  "author": "Carlos Lucero",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@coreui/coreui": "^5.3.2",
@@ -31,11 +36,17 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "24.0.8",
     "@types/react": "19.1.8",
+    "@vitejs/plugin-react": "^5.1.4",
     "eslint": "9.39.2",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.1.0",
     "tailwindcss": "^4",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "vitest": "^4.0.18"
   }
 }

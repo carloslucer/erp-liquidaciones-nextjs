@@ -60,6 +60,13 @@ docker-compose.override.yml
 .vercel
 
 # =========================
+# INTERNAL / AI CONFIG
+# =========================
+# Instrucciones internas para el agente de IA – no es código público
+agents.md
+AGENTS.md
+
+# =========================
 # TYPESCRIPT
 # =========================
 *.tsbuildinfo

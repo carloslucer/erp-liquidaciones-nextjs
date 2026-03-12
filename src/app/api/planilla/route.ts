@@ -19,11 +19,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "No hay JWT" }, { status: 401 });
   }
 
-  const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
-  // ej: https://tu-backend.com
+  const backendBase = process.env.API_BASE_URL;
+  // ej: https://tu-backend.com  → definir en .env como API_BASE_URL
   if (!backendBase) {
     return NextResponse.json(
-      { error: "Falta PLANILLA_BACKEND_BASE_URL" },
+      { error: "Falta API_BASE_URL" },
       { status: 500 }
     );
   }

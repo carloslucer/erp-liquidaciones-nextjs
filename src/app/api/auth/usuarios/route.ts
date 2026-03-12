@@ -10,7 +10,7 @@ export async function GET() {
     return NextResponse.json({ message: "No autorizado" }, { status: 401 });
   }
 
-  const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const backendBase = process.env.API_BASE_URL;
 
   try {
     const backendRes = await fetch(`${backendBase}/api/auth/usuarios`, {

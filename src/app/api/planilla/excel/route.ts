@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const documento = searchParams.get("documento");
   const periodo = searchParams.get("periodo");
 
-  const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const backendBase = process.env.API_BASE_URL;
 
   if (!documento || !periodo) {
     return NextResponse.json(

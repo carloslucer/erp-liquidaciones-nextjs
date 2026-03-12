@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   if (!token) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
-  const backendBase =  process.env.NEXT_PUBLIC_API_BASE_URL;
+  const backendBase =  process.env.API_BASE_URL;
 
 
   if (!documento || !periodo) {
