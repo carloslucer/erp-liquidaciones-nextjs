@@ -60,6 +60,11 @@ docker-compose.override.yml
 .vercel
 
 # =========================
+# LOCAL / COPILOT
+# =========================
+agents.md
+
+# =========================
 # INTERNAL / AI CONFIG
 # =========================
 # Instrucciones internas para el agente de IA – no es código público
